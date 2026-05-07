@@ -1,5 +1,4 @@
--- // ORBIT CHARACTER + FULL UI LIBRARY
--- Hecho para ti
+-- // ORBIT CHARACTER - Menú Simple y Funcional
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,96 +21,98 @@ local settings = {
     Enabled = false
 }
 
--- ==================== UI LIBRARY (Versión funcional) ==================== --
--- (Usando una versión simplificada pero funcional de tu librería)
+-- ==================== MENÚ ==================== --
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "OrbitMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
-local Library = {}
-Library.Window = function(title, size)
-    local gui = Instance.new("ScreenGui", player.PlayerGui)
-    gui.Name = "OrbitUI"
-    
-    local frame = Instance.new("Frame", gui)
-    frame.Size = UDim2.new(0, size.X, 0, size.Y)
-    frame.Position = UDim2.new(0.5, -size.X/2, 0.5, -size.Y/2)
-    frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    frame.BorderSizePixel = 0
-    
-    local titleLabel = Instance.new("TextLabel", frame)
-    titleLabel.Size = UDim2.new(1,0,0,50)
-    titleLabel.BackgroundColor3 = Color3.fromRGB(15,15,15)
-    titleLabel.Text = title
-    titleLabel.TextColor3 = Color3.new(1,1,1)
-    titleLabel.TextScaled = true
-    
-    return {
-        AddTab = function(self, tabName)
-            local tab = {}
-            tab.AddSection = function(self, name, side)
-                local section = {}
-                section.AddToggle = function(self, data)
-                    local toggle = Instance.new("TextButton", frame)
-                    toggle.Size = UDim2.new(0.9,0,0,40)
-                    toggle.Position = UDim2.new(0.05,0,0.2,0)
-                    toggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
-                    toggle.Text = data.Title or "Toggle"
-                    toggle.TextColor3 = Color3.new(1,1,1)
-                    toggle.TextScaled = true
-                    
-                    local enabled = false
-                    toggle.MouseButton1Click:Connect(function()
-                        enabled = not enabled
-                        toggle.BackgroundColor3 = enabled and Color3.fromRGB(0,170,0) or Color3.fromRGB(40,40,40)
-                        if data.Callback then data.Callback(enabled) end
-                    end)
-                    return toggle
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 320, 0, 420)
+Frame.Position = UDim2.new(0.5, -160, 0.5, -210)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+Title.Text = "🔄 Orbit Character"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+-- Toggle
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.9, 0, 0, 50)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0, 70)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+ToggleBtn.Text = "ACTIVAR ORBIT"
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+ToggleBtn.TextScaled = true
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.Parent = Frame
+
+-- Target
+local TargetLabel = Instance.new("TextLabel")
+TargetLabel.Size = UDim2.new(0.9, 0, 0, 30)
+TargetLabel.Position = UDim2.new(0.05, 0, 0, 130)
+TargetLabel.BackgroundTransparency = 1
+TargetLabel.Text = "Target: Ninguno"
+TargetLabel.TextColor3 = Color3.new(1,1,1)
+TargetLabel.TextScaled = true
+TargetLabel.Parent = Frame
+
+-- Sliders
+local function createSlider(name, min, max, default, pos, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.9,0,0,20)
+    label.Position = UDim2.new(0.05,0,0,pos)
+    label.BackgroundTransparency = 1
+    label.Text = name .. ": " .. default
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextScaled = true
+    label.Parent = Frame
+
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0.9,0,0,10)
+    slider.Position = UDim2.new(0.05,0,0,pos+25)
+    slider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    slider.Parent = Frame
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0.5,0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    fill.Parent = slider
+
+    local value = default
+    callback(value)
+
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mouseMove = UserInputService.InputChanged:Connect(function(move)
+                if move.UserInputType == Enum.UserInputType.MouseMovement then
+                    local percent = math.clamp((mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+                    value = math.floor(min + (max - min) * percent)
+                    fill.Size = UDim2.new(percent, 0, 1, 0)
+                    label.Text = name .. ": " .. value
+                    callback(value)
                 end
-                section.AddSlider = function(self, data)
-                    -- Simple slider placeholder
-                    print("Slider:", data.Title)
-                end
-                section.AddDropdown = function(self, data)
-                    print("Dropdown:", data.Title)
-                end
-                return section
-            end
-            return tab
+            end)
+            local release
+            release = UserInputService.InputEnded:Connect(function()
+                mouseMove:Disconnect()
+                release:Disconnect()
+            end)
         end
-    }
+    end)
 end
 
--- ==================== ORBIT LOGIC ==================== --
-
-local window = Library.Window("Orbit Character", Vector2.new(520, 580))
-local mainTab = window:AddTab("Main")
-local controlSection = mainTab:AddSection("Control", "Left")
-
-controlSection:AddToggle({
-    Title = "Activar Orbit",
-    Callback = function(state)
-        settings.Enabled = state
-        if state then
-            StartOrbit()
-        else
-            StopOrbit()
-        end
-    end
-})
-
--- Target Player
-local playerNames = {}
-for _, plr in pairs(Players:GetPlayers()) do
-    if plr ~= player then table.insert(playerNames, plr.Name) end
-end
-
-controlSection:AddDropdown({
-    Title = "Target Player",
-    List = playerNames,
-    Callback = function(name)
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr.Name == name then target = plr; break end
-        end
-    end
-})
+-- Sliders
+createSlider("Distancia", 5, 30, 12, 170, function(v) settings.Distance = v end)
+createSlider("Altura", -5, 20, 5, 220, function(v) settings.Height = v end)
+createSlider("Velocidad", 0.5, 8, 2.8, 270, function(v) settings.Speed = v end)
 
 -- Funciones Orbit
 function StartOrbit()
@@ -137,11 +138,36 @@ function StopOrbit()
     if humanoid then humanoid:MoveTo(root.Position) end
 end
 
+ToggleBtn.MouseButton1Click:Connect(function()
+    settings.Enabled = not settings.Enabled
+    ToggleBtn.Text = settings.Enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
+    ToggleBtn.BackgroundColor3 = settings.Enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
+    
+    if settings.Enabled then
+        StartOrbit()
+    else
+        StopOrbit()
+    end
+end)
+
+-- Atajo O
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.O then
         settings.Enabled = not settings.Enabled
+        ToggleBtn.Text = settings.Enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
+        ToggleBtn.BackgroundColor3 = settings.Enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
         if settings.Enabled then StartOrbit() else StopOrbit() end
     end
 end)
 
-print("✅ Orbit con UI cargado | Presiona O")
+-- Seleccionar primer target
+for _, plr in pairs(Players:GetPlayers()) do
+    if plr ~= player then
+        target = plr
+        TargetLabel.Text = "Target: " .. plr.Name
+        break
+    end
+end
+
+print("✅ Menú de Orbit cargado correctamente")
+print("Presiona 'O' para activar/desactivar")
