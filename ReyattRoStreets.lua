@@ -1,4 +1,4 @@
--- // ORBIT CHARACTER - Versión Suave y Fluida
+-- // ORBIT CHARACTER + CAMERA SPECTATE
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -8,6 +8,7 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
 
 local target = nil
 local enabled = false
@@ -15,9 +16,9 @@ local angle = 0
 local connection
 
 local settings = {
-    Distance = 15,
-    Height = 6,
-    Speed = 3.2
+    Distance = 16,
+    Height = 7,
+    Speed = 3.5
 }
 
 -- ==================== MENÚ ==================== --
@@ -36,7 +37,7 @@ Frame.Parent = ScreenGui
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1,0,0,50)
 Title.BackgroundColor3 = Color3.fromRGB(10,10,25)
-Title.Text = "🔄 Orbit Character"
+Title.Text = "🔄 Orbit + Spectate"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.TextScaled = true
 Title.Font = Enum.Font.GothamBold
@@ -70,7 +71,7 @@ for _, plr in pairs(Players:GetPlayers()) do
     end
 end
 
--- Mejor sistema de Orbit (más suave)
+-- ==================== ORBIT + CAMERA SPECTATE ==================== --
 function StartOrbit()
     if connection then connection:Disconnect() end
     
@@ -81,22 +82,27 @@ function StartOrbit()
         local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
         if not tRoot then return end
 
-        angle += settings.Speed * 55 * dt
+        angle += settings.Speed * 60 * dt
 
         local x = math.sin(math.rad(angle)) * settings.Distance
         local z = math.cos(math.rad(angle)) * settings.Distance
 
         local newPos = tRoot.Position + Vector3.new(x, settings.Height, z)
         
-        -- Movimiento más suave
+        -- Orbit con CFrame
         root.CFrame = CFrame.lookAt(newPos, tRoot.Position)
         
-        Debug.Text = "Debug:\nOrbitando a: ".. target.Name .."\nDistancia: "..math.floor(settings.Distance)
+        -- Camera Spectate al objetivo
+        camera.CameraType = Enum.CameraType.Scriptable
+        camera.CFrame = CFrame.lookAt(tRoot.Position + Vector3.new(0, 8, 18), tRoot.Position)
+        
+        Debug.Text = "Debug:\nOrbitando + Specteando a: " .. target.Name
     end)
 end
 
 function StopOrbit()
     if connection then connection:Disconnect() end
+    camera.CameraType = Enum.CameraType.Custom  -- Volver a cámara normal
     Debug.Text = "Debug:\nDetenido"
 end
 
@@ -105,7 +111,11 @@ ToggleBtn.MouseButton1Click:Connect(function()
     ToggleBtn.Text = enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
     ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
     
-    if enabled then StartOrbit() else StopOrbit() end
+    if enabled then
+        StartOrbit()
+    else
+        StopOrbit()
+    end
 end)
 
 UserInputService.InputBegan:Connect(function(input)
@@ -114,8 +124,13 @@ UserInputService.InputBegan:Connect(function(input)
         ToggleBtn.Text = enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
         ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
         
-        if enabled then StartOrbit() else StopOrbit() end
+        if enabled then
+            StartOrbit()
+        else
+            StopOrbit()
+        end
     end
 end)
 
-print("✅ Orbit Mejorado cargado")
+print("✅ Orbit + Camera Spectate cargado")
+print("Presiona O")
