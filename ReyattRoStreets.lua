@@ -1,33 +1,10 @@
--- // ORBIT CHARACTER - FULL SCRIPT (Library + Orbit)
+-- // ORBIT CHARACTER - Versión Corregida
 
-local Secure = setmetatable({}, {__index = function(self, service) return game:GetService(service) end})
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local UserInput = Secure.UserInputService
-local RunService = Secure.RunService
-local Players = Secure.Players
-local LocalPlayer = Players.LocalPlayer
-
--- ==================== LIBRARY (Resumida para que funcione) ==================== --
--- (Si quieres la librería completa, dime y te la doy en partes)
-
-local Library = {
-    Theme = {
-        Accent = {Color3.fromRGB(120, 100, 255)},
-        Outline = Color3.fromRGB(0,0,0),
-        Inline = Color3.fromRGB(45,45,45),
-        LightContrast = Color3.fromRGB(25,25,25),
-        DarkContrast = Color3.fromRGB(18,18,18),
-        Text = Color3.fromRGB(255,255,255),
-    },
-    Flags = {},
-    Drawings = {},
-    Connections = {},
-    WindowVisible = true,
-}
-
--- ==================== ORBIT CODE ==================== --
-
-local player = LocalPlayer
+local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 local humanoid = character:WaitForChild("Humanoid")
@@ -44,45 +21,47 @@ local settings = {
     Enabled = false
 }
 
--- Crear UI
-local window = Library.Window("Orbit Character", Vector2.new(500, 550))
+-- Crear Menú Simple (sin librería pesada)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "OrbitMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
-local main = window:Tab("Main")
-local sett = window:Tab("Settings")
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 400)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -200)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
 
-local sec1 = main:Section("Control", "Left")
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.Text = "🔄 Orbit Character"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
+Title.Parent = Frame
 
-sec1:Toggle({
-    Title = "Activar Orbit",
-    Callback = function(v)
-        settings.Enabled = v
-        if v then StartOrbit() else StopOrbit() end
-    end
-})
+-- Botones simples
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.9, 0, 0, 50)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0, 70)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+ToggleBtn.Text = "Activar Orbit"
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+ToggleBtn.TextScaled = true
+ToggleBtn.Parent = Frame
 
-local playerNames = {}
-for _, p in pairs(Players:GetPlayers()) do
-    if p ~= player then table.insert(playerNames, p.Name) end
-end
+local StopBtn = Instance.new("TextButton")
+StopBtn.Size = UDim2.new(0.9, 0, 0, 50)
+StopBtn.Position = UDim2.new(0.05, 0, 0, 130)
+StopBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+StopBtn.Text = "Detener Orbit"
+StopBtn.TextColor3 = Color3.new(1,1,1)
+StopBtn.TextScaled = true
+StopBtn.Parent = Frame
 
-sec1:Dropdown({
-    Title = "Seleccionar Jugador",
-    List = playerNames,
-    Callback = function(name)
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Name == name then target = p; break end
-        end
-    end
-})
-
-sec1:Button({Title = "Detener", Callback = StopOrbit})
-
-local sec2 = sett:Section("Ajustes", "Left")
-
-sec2:Slider({Title = "Distancia", Min = 5, Max = 30, Default = 12, Callback = function(v) settings.Distance = v end})
-sec2:Slider({Title = "Altura", Min = -5, Max = 20, Default = 5, Callback = function(v) settings.Height = v end})
-sec2:Slider({Title = "Velocidad", Min = 0.5, Max = 8, Default = 2.8, Callback = function(v) settings.Speed = v end})
-
+-- Funciones
 function StartOrbit()
     if connection then connection:Disconnect() end
     connection = RunService.Heartbeat:Connect(function(dt)
@@ -106,11 +85,30 @@ function StopOrbit()
     if humanoid then humanoid:MoveTo(root.Position) end
 end
 
-UserInput.InputBegan:Connect(function(input)
+ToggleBtn.MouseButton1Click:Connect(function()
+    settings.Enabled = not settings.Enabled
+    ToggleBtn.Text = settings.Enabled and "Desactivar Orbit" or "Activar Orbit"
+    ToggleBtn.BackgroundColor3 = settings.Enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
+    if settings.Enabled then StartOrbit() else StopOrbit() end
+end)
+
+StopBtn.MouseButton1Click:Connect(StopOrbit)
+
+-- Seleccionar primer jugador como target
+for _, plr in pairs(Players:GetPlayers()) do
+    if plr ~= player then
+        target = plr
+        break
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.O then
         settings.Enabled = not settings.Enabled
+        ToggleBtn.Text = settings.Enabled and "Desactivar Orbit" or "Activar Orbit"
+        ToggleBtn.BackgroundColor3 = settings.Enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
         if settings.Enabled then StartOrbit() else StopOrbit() end
     end
 end)
 
-print("✅ Orbit cargado | Presiona O")
+print("✅ Orbit cargado correctamente | Presiona O")
