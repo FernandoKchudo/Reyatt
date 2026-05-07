@@ -1,4 +1,4 @@
--- // ORBIT CHARACTER + CAMERA SPECTATE
+-- // ORBIT CHARACTER + CÁMARA DEFAULT (Mouse Libre)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,7 +18,7 @@ local connection
 local settings = {
     Distance = 16,
     Height = 7,
-    Speed = 3.5
+    Speed = 3.6
 }
 
 -- ==================== MENÚ ==================== --
@@ -37,7 +37,7 @@ Frame.Parent = ScreenGui
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1,0,0,50)
 Title.BackgroundColor3 = Color3.fromRGB(10,10,25)
-Title.Text = "🔄 Orbit + Spectate"
+Title.Text = "🔄 Orbit Character"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.TextScaled = true
 Title.Font = Enum.Font.GothamBold
@@ -71,7 +71,7 @@ for _, plr in pairs(Players:GetPlayers()) do
     end
 end
 
--- ==================== ORBIT + CAMERA SPECTATE ==================== --
+-- ==================== ORBIT + CÁMARA DEFAULT ==================== --
 function StartOrbit()
     if connection then connection:Disconnect() end
     
@@ -89,20 +89,21 @@ function StartOrbit()
 
         local newPos = tRoot.Position + Vector3.new(x, settings.Height, z)
         
-        -- Orbit con CFrame
+        -- Movimiento del personaje
         root.CFrame = CFrame.lookAt(newPos, tRoot.Position)
         
-        -- Camera Spectate al objetivo
-        camera.CameraType = Enum.CameraType.Scriptable
-        camera.CFrame = CFrame.lookAt(tRoot.Position + Vector3.new(0, 8, 18), tRoot.Position)
+        -- Cámara Default (Mouse libre)
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = target.Character.Humanoid  -- Spectate al objetivo
         
-        Debug.Text = "Debug:\nOrbitando + Specteando a: " .. target.Name
+        Debug.Text = "Debug:\nOrbitando a: " .. target.Name .. "\n(Cámara Libre)"
     end)
 end
 
 function StopOrbit()
     if connection then connection:Disconnect() end
-    camera.CameraType = Enum.CameraType.Custom  -- Volver a cámara normal
+    camera.CameraType = Enum.CameraType.Custom
+    camera.CameraSubject = humanoid  -- Volver a tu propio personaje
     Debug.Text = "Debug:\nDetenido"
 end
 
@@ -132,5 +133,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("✅ Orbit + Camera Spectate cargado")
-print("Presiona O")
+print("✅ Orbit + Cámara Default (Mouse Libre) cargado")
