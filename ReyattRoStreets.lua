@@ -1,4 +1,4 @@
--- // ORBIT CHARACTER - Menú + Sistema Funcional
+-- // ORBIT CHARACTER - Versión Mejorada y con Debug
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,8 +16,8 @@ local connection
 
 local settings = {
     Distance = 12,
-    Height = 5,
-    Speed = 2.8
+    Height = 6,
+    Speed = 3
 }
 
 -- ==================== MENÚ ==================== --
@@ -27,15 +27,15 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 350, 0, 300)
-Frame.Position = UDim2.new(0.5, -175, 0.5, -150)
+Frame.Size = UDim2.new(0, 360, 0, 320)
+Frame.Position = UDim2.new(0.5, -180, 0.5, -160)
 Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 50)
-Title.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
+Title.BackgroundColor3 = Color3.fromRGB(10, 10, 25)
 Title.Text = "🔄 Orbit Character"
 Title.TextColor3 = Color3.new(1,1,1)
 Title.TextScaled = true
@@ -52,32 +52,43 @@ ToggleBtn.TextScaled = true
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.Parent = Frame
 
-local TargetText = Instance.new("TextLabel")
-TargetText.Size = UDim2.new(0.85, 0, 0, 30)
-TargetText.Position = UDim2.new(0.075, 0, 0, 150)
-TargetText.BackgroundTransparency = 1
-TargetText.Text = "Target: Ninguno"
-TargetText.TextColor3 = Color3.new(1,1,1)
-TargetText.TextScaled = true
-TargetText.Parent = Frame
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(0.85, 0, 0, 40)
+Status.Position = UDim2.new(0.075, 0, 0, 150)
+Status.BackgroundTransparency = 1
+Status.Text = "Estado: Desactivado"
+Status.TextColor3 = Color3.new(1, 0.3, 0.3)
+Status.TextScaled = true
+Status.Parent = Frame
 
--- Seleccionar primer target
+-- Seleccionar target
 for _, plr in pairs(Players:GetPlayers()) do
-    if plr ~= player then
+    if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
         target = plr
-        TargetText.Text = "Target: " .. plr.Name
         break
     end
+end
+
+if target then
+    Status.Text = "Target: " .. target.Name
+else
+    Status.Text = "Target: No encontrado"
 end
 
 -- Funciones Orbit
 function StartOrbit()
     if connection then connection:Disconnect() end
+    
     connection = RunService.Heartbeat:Connect(function(dt)
         if not enabled then return end
-        if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then return end
+        if not target or not target.Character then 
+            StopOrbit()
+            return 
+        end
+        
+        local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
+        if not tRoot then return end
 
-        local tRoot = target.Character.HumanoidRootPart
         angle += settings.Speed * 50 * dt
 
         local x = math.sin(math.rad(angle)) * settings.Distance
@@ -96,25 +107,25 @@ function StopOrbit()
     if humanoid then humanoid:MoveTo(root.Position) end
 end
 
--- Toggle
 ToggleBtn.MouseButton1Click:Connect(function()
     enabled = not enabled
     ToggleBtn.Text = enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
-    ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170, 0, 0) or Color3.fromRGB(0, 170, 0)
+    ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
     
     if enabled then
         StartOrbit()
+        print("✅ Orbit ACTIVADO")
     else
         StopOrbit()
+        print("❌ Orbit DESACTIVADO")
     end
 end)
 
--- Atajo O
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.O then
         enabled = not enabled
         ToggleBtn.Text = enabled and "DESACTIVAR ORBIT" or "ACTIVAR ORBIT"
-        ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170, 0, 0) or Color3.fromRGB(0, 170, 0)
+        ToggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
         
         if enabled then
             StartOrbit()
@@ -124,5 +135,4 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("✅ Orbit Menu cargado correctamente")
-print("Presiona 'O' o haz click en el botón")
+print("✅ Menú + Orbit cargado | Presiona O")
